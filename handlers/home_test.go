@@ -5,11 +5,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestHome(t *testing.T) {
 	w := httptest.NewRecorder()
-	home(w, nil)
+	buildTime := time.Now().Format("20060102_03:04:05")
+	commit := "some test hash"
+	release := "0.0.8"
+	h := home(buildTime, commit, release)
+	h(w, nil)
 
 	resp := w.Result()
 	if have, want := resp.StatusCode, http.StatusOK; have != want {
@@ -21,7 +26,7 @@ func TestHome(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
-	if have, want := string(greeting), "Hello! Your request was processed."; have != want {
+	if have, want := string(greeting), `{"buildTime":"unset","commit":"unset","release":"unset"}`; have != want {
 		t.Errorf("The greeting is wrong.Have: %s, want: %s.", have, want)
 	}
 }
