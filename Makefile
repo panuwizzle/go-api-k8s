@@ -36,7 +36,7 @@ run: container
 push: container
 	minikube image load $(CONTAINER_IMAGE):$(RELEASE)
 
-minikube: #push
+minikube: push
 	for t in ./kubernetes/advent/*.yml; do \
         cat $$t | \
         	sed -E "s/\{\{(\s*)\.Release(\s*)\}\}/$(RELEASE)/g" | \
