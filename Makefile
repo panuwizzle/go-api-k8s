@@ -6,6 +6,7 @@ COMMIT?=$(shell git rev-parse --short HEAD)
 BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 GOOS?=linux
 GOARCH?=amd64
+CONTAINER_IMAGE?=${APP}
 
 clean:
 	rm -f ${APP}
@@ -22,6 +23,7 @@ build: clean
 test:
 	go test -v -race ./...
 
+# === Container
 container: build
 	docker build --no-cache -t ${APP}:${RELEASE} .
 
@@ -30,3 +32,16 @@ run: container
 	docker run --name ${APP} -p ${PORT}:${PORT} --rm \
 		-e "PORT=${PORT}" \
 		$(APP):$(RELEASE)
+
+push: container
+	minikube image load $(CONTAINER_IMAGE):$(RELEASE)
+
+minikube: #push
+	for t in ./kubernetes/advent/*.yml; do \
+        cat $$t | \
+        	sed -E "s/\{\{(\s*)\.Release(\s*)\}\}/$(RELEASE)/g" | \
+        	sed -E "s/\{\{(\s*)\.ServiceName(\s*)\}\}/$(APP)/g"; \
+        echo \\n---; \
+    done > tmp.yaml
+	kubectl apply -f tmp.yaml
+	rm tmp.yaml
